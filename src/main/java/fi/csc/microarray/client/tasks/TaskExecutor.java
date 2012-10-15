@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -46,6 +47,7 @@ import fi.csc.microarray.messaging.message.JobMessage;
 import fi.csc.microarray.messaging.message.ChipsterMessage;
 import fi.csc.microarray.messaging.message.ParameterMessage;
 import fi.csc.microarray.messaging.message.ResultMessage;
+import fi.csc.microarray.module.basic.BasicModule;
 import fi.csc.microarray.util.IOUtils.CopyProgressListener;
 
 /**
@@ -330,15 +332,43 @@ public class TaskExecutor {
 		}
 
 		private void extractPayloads(ResultMessage resultMessage) throws JMSException, MicroarrayException, IOException {
-			for (String name : resultMessage.payloadNames()) {
+			for (String name : resultMessage.payloadNames()) {							
 				logger.debug("output " + name);
 				URL payloadUrl = resultMessage.getPayload(name);
-				InputStream payload = fileBroker.getFile(payloadUrl); 
+				InputStream payload = fileBroker.getFile(payloadUrl);				
+				name = getBasicOutputName(name);				
 				DataBean bean = manager.createDataBean(name, payload);
 				bean.setCacheUrl(payloadUrl);
 				bean.setContentChanged(false);
 				pendingTask.addOutput(name, bean);
+				
 			}
+		}
+
+		private String getBasicOutputName(String name) {
+			
+			//we can create better names only if there is exactly one non-phenodata input
+			int inputCount = 0;
+			String inputName = "";
+			for (DataBean bean : pendingTask.getInputs()) {
+				if (!bean.hasTypeTag(BasicModule.TypeTags.PHENODATA)) {
+					inputCount++;
+					inputName = bean.getName();
+				}
+			}
+
+			final String NAME_DELIMITER = " - ";
+			if (inputCount == 1) {
+				// cut off input file extension 
+				if (inputName.contains(".") && inputName.lastIndexOf(".") > 1) {
+					inputName = inputName.substring(0, inputName.lastIndexOf("."));
+				}
+				//cut off everything after last NAME_DELIMITER
+				if (inputName.contains(NAME_DELIMITER) && inputName.lastIndexOf(NAME_DELIMITER) > 1) {
+					inputName = inputName.substring(0, inputName.lastIndexOf(NAME_DELIMITER));
+				}
+			}
+			return inputName + NAME_DELIMITER + name;			
 		}
 
 		/**
