@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -32,22 +31,21 @@ import fi.csc.microarray.databeans.DataBean;
 import fi.csc.microarray.databeans.DataManager;
 import fi.csc.microarray.exception.MicroarrayException;
 import fi.csc.microarray.filebroker.FileBrokerClient;
-import fi.csc.microarray.filebroker.JMSFileBrokerClient;
 import fi.csc.microarray.filebroker.FileBrokerException;
+import fi.csc.microarray.filebroker.JMSFileBrokerClient;
 import fi.csc.microarray.filebroker.NotEnoughDiskSpaceException;
 import fi.csc.microarray.messaging.JobState;
 import fi.csc.microarray.messaging.MessagingEndpoint;
 import fi.csc.microarray.messaging.MessagingTopic;
+import fi.csc.microarray.messaging.MessagingTopic.AccessMode;
 import fi.csc.microarray.messaging.TempTopicMessagingListener;
 import fi.csc.microarray.messaging.TempTopicMessagingListenerBase;
 import fi.csc.microarray.messaging.Topics;
-import fi.csc.microarray.messaging.MessagingTopic.AccessMode;
+import fi.csc.microarray.messaging.message.ChipsterMessage;
 import fi.csc.microarray.messaging.message.CommandMessage;
 import fi.csc.microarray.messaging.message.JobMessage;
-import fi.csc.microarray.messaging.message.ChipsterMessage;
 import fi.csc.microarray.messaging.message.ParameterMessage;
 import fi.csc.microarray.messaging.message.ResultMessage;
-import fi.csc.microarray.module.basic.BasicModule;
 import fi.csc.microarray.util.IOUtils.CopyProgressListener;
 
 /**
@@ -335,59 +333,12 @@ public class TaskExecutor {
 			for (String name : resultMessage.payloadNames()) {							
 				logger.debug("output " + name);
 				URL payloadUrl = resultMessage.getPayload(name);
-				InputStream payload = fileBroker.getFile(payloadUrl);				
-				name = getBasicOutputName(name);				
+				InputStream payload = fileBroker.getFile(payloadUrl);							
 				DataBean bean = manager.createDataBean(name, payload);
 				bean.setCacheUrl(payloadUrl);
 				bean.setContentChanged(false);
-				pendingTask.addOutput(name, bean);
-				
+				pendingTask.addOutput(name, bean);				
 			}
-		}
-
-		private String getBasicOutputName(String name) {
-			
-			//get the common part of all non-phenodata input names			
-			String inputName = null;
-			for (DataBean bean : pendingTask.getInputs()) {
-				if (!bean.hasTypeTag(BasicModule.TypeTags.PHENODATA)) {
-					
-					if ( inputName == null) {
-						inputName = bean.getName();
-					} else {
-						inputName = getCommonPrefix(inputName, bean.getName());
-					}
-				}
-			}
-			
-			//Remove file extension and previous ending
-			final String NAME_DELIMITER = " - ";
-			if (inputName != null) {
-				// cut off input file extension 
-				if (inputName.contains(".")) {
-					inputName = inputName.substring(0, inputName.lastIndexOf("."));
-				}
-				//cut off everything after last NAME_DELIMITER
-				if (inputName.contains(NAME_DELIMITER)) {
-					inputName = inputName.substring(0, inputName.lastIndexOf(NAME_DELIMITER));
-				}
-			}
-			
-			if (inputName != null && inputName.length() > 1) {	
-				return inputName + NAME_DELIMITER + name;			
-			} else {
-				return name;
-			}
-		}
-		
-		private String getCommonPrefix(String a, String b) {
-			int i = 0;
-			
-			while (i < a.length() && i < b.length() && a.charAt(i) == b.charAt(i)) {
-				i++;
-			}
-			
-			return a.substring(0, i);
 		}
 
 		/**
