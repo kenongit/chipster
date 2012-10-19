@@ -347,28 +347,47 @@ public class TaskExecutor {
 
 		private String getBasicOutputName(String name) {
 			
-			//we can create better names only if there is exactly one non-phenodata input
-			int inputCount = 0;
-			String inputName = "";
+			//get the common part of all non-phenodata input names			
+			String inputName = null;
 			for (DataBean bean : pendingTask.getInputs()) {
 				if (!bean.hasTypeTag(BasicModule.TypeTags.PHENODATA)) {
-					inputCount++;
-					inputName = bean.getName();
+					
+					if ( inputName == null) {
+						inputName = bean.getName();
+					} else {
+						inputName = getCommonPrefix(inputName, bean.getName());
+					}
 				}
 			}
-
+			
+			//Remove file extension and previous ending
 			final String NAME_DELIMITER = " - ";
-			if (inputCount == 1) {
+			if (inputName != null) {
 				// cut off input file extension 
-				if (inputName.contains(".") && inputName.lastIndexOf(".") > 1) {
+				if (inputName.contains(".")) {
 					inputName = inputName.substring(0, inputName.lastIndexOf("."));
 				}
 				//cut off everything after last NAME_DELIMITER
-				if (inputName.contains(NAME_DELIMITER) && inputName.lastIndexOf(NAME_DELIMITER) > 1) {
+				if (inputName.contains(NAME_DELIMITER)) {
 					inputName = inputName.substring(0, inputName.lastIndexOf(NAME_DELIMITER));
 				}
 			}
-			return inputName + NAME_DELIMITER + name;			
+			
+			if (inputName != null && inputName.length() > 1) {	
+				return inputName + NAME_DELIMITER + name;			
+			} else {
+				return name;
+			}
+		}
+		
+		private String getCommonPrefix(String a, String b) {
+			int i = 0;
+			
+			while (i < a.length() && i < b.length() && a.charAt(i) == b.charAt(i)) {
+				i++;
+			}
+			
+			return a.substring(0, i);
 		}
 
 		/**
