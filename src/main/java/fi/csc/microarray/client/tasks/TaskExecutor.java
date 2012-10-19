@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -46,6 +47,7 @@ import fi.csc.microarray.messaging.message.JobMessage;
 import fi.csc.microarray.messaging.message.ChipsterMessage;
 import fi.csc.microarray.messaging.message.ParameterMessage;
 import fi.csc.microarray.messaging.message.ResultMessage;
+import fi.csc.microarray.module.basic.BasicModule;
 import fi.csc.microarray.util.IOUtils.CopyProgressListener;
 
 /**
@@ -330,15 +332,62 @@ public class TaskExecutor {
 		}
 
 		private void extractPayloads(ResultMessage resultMessage) throws JMSException, MicroarrayException, IOException {
-			for (String name : resultMessage.payloadNames()) {
+			for (String name : resultMessage.payloadNames()) {							
 				logger.debug("output " + name);
 				URL payloadUrl = resultMessage.getPayload(name);
-				InputStream payload = fileBroker.getFile(payloadUrl); 
+				InputStream payload = fileBroker.getFile(payloadUrl);				
+				name = getBasicOutputName(name);				
 				DataBean bean = manager.createDataBean(name, payload);
 				bean.setCacheUrl(payloadUrl);
 				bean.setContentChanged(false);
 				pendingTask.addOutput(name, bean);
+				
 			}
+		}
+
+		private String getBasicOutputName(String name) {
+			
+			//get the common part of all non-phenodata input names			
+			String inputName = null;
+			for (DataBean bean : pendingTask.getInputs()) {
+				if (!bean.hasTypeTag(BasicModule.TypeTags.PHENODATA)) {
+					
+					if ( inputName == null) {
+						inputName = bean.getName();
+					} else {
+						inputName = getCommonPrefix(inputName, bean.getName());
+					}
+				}
+			}
+			
+			//Remove file extension and previous ending
+			final String NAME_DELIMITER = " - ";
+			if (inputName != null) {
+				// cut off input file extension 
+				if (inputName.contains(".")) {
+					inputName = inputName.substring(0, inputName.lastIndexOf("."));
+				}
+				//cut off everything after last NAME_DELIMITER
+				if (inputName.contains(NAME_DELIMITER)) {
+					inputName = inputName.substring(0, inputName.lastIndexOf(NAME_DELIMITER));
+				}
+			}
+			
+			if (inputName != null && inputName.length() > 1) {	
+				return inputName + NAME_DELIMITER + name;			
+			} else {
+				return name;
+			}
+		}
+		
+		private String getCommonPrefix(String a, String b) {
+			int i = 0;
+			
+			while (i < a.length() && i < b.length() && a.charAt(i) == b.charAt(i)) {
+				i++;
+			}
+			
+			return a.substring(0, i);
 		}
 
 		/**

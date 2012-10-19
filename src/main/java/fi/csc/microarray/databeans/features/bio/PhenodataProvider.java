@@ -49,7 +49,7 @@ public class PhenodataProvider extends FeatureProviderBase {
 		Table columns = null;
 		try {
 			// FIXME fix hacky phenodata check (prevents problems with data that is almost tabular)
-			if (bean.getName().startsWith("phenodata")) {
+			if (bean.getName().contains("phenodata")) {
 				columns = bean.queryFeatures("/column/*").asTable();
 			}
 			
