@@ -34,33 +34,33 @@ import fi.csc.microarray.client.dialog.ChipsterDialog.DetailsVisibility;
 import fi.csc.microarray.client.dialog.ChipsterDialog.PluginButton;
 import fi.csc.microarray.client.dialog.DialogInfo.Severity;
 import fi.csc.microarray.client.operation.Operation;
+import fi.csc.microarray.client.operation.Operation.DataBinding;
 import fi.csc.microarray.client.operation.OperationDefinition;
 import fi.csc.microarray.client.operation.OperationRecord;
 import fi.csc.microarray.client.operation.ToolCategory;
 import fi.csc.microarray.client.operation.ToolModule;
-import fi.csc.microarray.client.operation.Operation.DataBinding;
 import fi.csc.microarray.client.selection.DataSelectionManager;
 import fi.csc.microarray.client.session.UserSession;
 import fi.csc.microarray.client.tasks.Task;
+import fi.csc.microarray.client.tasks.Task.State;
 import fi.csc.microarray.client.tasks.TaskEventListener;
 import fi.csc.microarray.client.tasks.TaskException;
 import fi.csc.microarray.client.tasks.TaskExecutor;
-import fi.csc.microarray.client.tasks.Task.State;
+import fi.csc.microarray.client.visualisation.Visualisation.Variable;
 import fi.csc.microarray.client.visualisation.VisualisationFrameManager;
+import fi.csc.microarray.client.visualisation.VisualisationFrameManager.FrameType;
 import fi.csc.microarray.client.visualisation.VisualisationMethod;
 import fi.csc.microarray.client.visualisation.VisualisationMethodChangedEvent;
-import fi.csc.microarray.client.visualisation.Visualisation.Variable;
-import fi.csc.microarray.client.visualisation.VisualisationFrameManager.FrameType;
 import fi.csc.microarray.client.workflow.WorkflowManager;
 import fi.csc.microarray.config.Configuration;
 import fi.csc.microarray.config.DirectoryLayout;
 import fi.csc.microarray.databeans.DataBean;
+import fi.csc.microarray.databeans.DataBean.Link;
 import fi.csc.microarray.databeans.DataChangeEvent;
 import fi.csc.microarray.databeans.DataChangeListener;
 import fi.csc.microarray.databeans.DataFolder;
 import fi.csc.microarray.databeans.DataItem;
 import fi.csc.microarray.databeans.DataManager;
-import fi.csc.microarray.databeans.DataBean.Link;
 import fi.csc.microarray.exception.MicroarrayException;
 import fi.csc.microarray.messaging.SourceMessageListener;
 import fi.csc.microarray.messaging.auth.AuthenticationRequestListener;
@@ -440,11 +440,26 @@ public abstract class ClientApplication {
 				reportTaskError(task);
 				
 			} else {
+				Module primaryModule = Session.getSession().getPrimaryModule();
+
+				//Use part of input file names to create better names for the output files
+				List<String> sourceNames = new LinkedList<String>(); 
+				for (DataBinding binding : oper.getBindings()) {
+					if (!primaryModule.isMetadata(binding.getData())) {
+						sourceNames.add(binding.getData().getName());
+					}					
+				}
+				
+				String prefix = getTaskOutputPrefix(sourceNames);
+				
+				for (DataBean output : task.outputs()) {
+					output.setName(getTaskOutputName(output.getName(), prefix));
+				}								
+				
 				// task completed, create datasets etc.
 				newBeans = new LinkedList<DataBean>();
 
 				// read operated datas
-				Module primaryModule = Session.getSession().getPrimaryModule();
 				LinkedList<DataBean> sources = new LinkedList<DataBean>();
 				for (DataBinding binding : oper.getBindings()) {
 					// do not create derivation links for metadata datasets
@@ -453,8 +468,7 @@ public abstract class ClientApplication {
 					// for import tasks
 					// FIXME should such a source be deleted here?
 					if (!primaryModule.isMetadata(binding.getData()) && (binding.getData().getParent() != null)) {
-						sources.add(binding.getData());
-
+						sources.add(binding.getData());						
 					}
 				}
 
@@ -533,6 +547,41 @@ public abstract class ClientApplication {
 					oper.getResultListener().noResults();
 				}
 			}
+		}
+	}
+	
+	private static String getTaskOutputPrefix(List<String> sourceNames) {
+		
+		String prefix = null;
+		for (String sourceName: sourceNames) {				
+			if ( prefix == null) {
+				prefix = sourceName;
+			} else {
+				prefix = StringUtils.longestSubstring(prefix, sourceName);
+			}
+		}	
+		return prefix;
+	}
+	
+	private static String getTaskOutputName(String outputName, String prefix) {
+		
+		//Remove file extension and previous ending
+		final String NAME_DELIMITER = " - ";
+		if (prefix != null) {
+			// cut off input file extension 
+			if (prefix.contains(".")) {
+				prefix = prefix.substring(0, prefix.lastIndexOf("."));
+			}
+			//cut off everything after last NAME_DELIMITER
+			if (prefix.contains(NAME_DELIMITER)) {
+				prefix = prefix.substring(0, prefix.lastIndexOf(NAME_DELIMITER));
+			}
+		}
+		
+		if (prefix != null && prefix.length() > 2) {	
+			return prefix + NAME_DELIMITER + outputName;			
+		} else {
+			return outputName;
 		}
 	}
 	
@@ -670,7 +719,6 @@ public abstract class ClientApplication {
 		}
 		return null;
 	}
-
 	
 	/**
 	 * FIXME Better handling for existing file
