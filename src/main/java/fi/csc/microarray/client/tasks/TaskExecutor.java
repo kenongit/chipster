@@ -31,19 +31,19 @@ import fi.csc.microarray.databeans.DataBean;
 import fi.csc.microarray.databeans.DataManager;
 import fi.csc.microarray.exception.MicroarrayException;
 import fi.csc.microarray.filebroker.FileBrokerClient;
-import fi.csc.microarray.filebroker.JMSFileBrokerClient;
 import fi.csc.microarray.filebroker.FileBrokerException;
+import fi.csc.microarray.filebroker.JMSFileBrokerClient;
 import fi.csc.microarray.filebroker.NotEnoughDiskSpaceException;
 import fi.csc.microarray.messaging.JobState;
 import fi.csc.microarray.messaging.MessagingEndpoint;
 import fi.csc.microarray.messaging.MessagingTopic;
+import fi.csc.microarray.messaging.MessagingTopic.AccessMode;
 import fi.csc.microarray.messaging.TempTopicMessagingListener;
 import fi.csc.microarray.messaging.TempTopicMessagingListenerBase;
 import fi.csc.microarray.messaging.Topics;
-import fi.csc.microarray.messaging.MessagingTopic.AccessMode;
+import fi.csc.microarray.messaging.message.ChipsterMessage;
 import fi.csc.microarray.messaging.message.CommandMessage;
 import fi.csc.microarray.messaging.message.JobMessage;
-import fi.csc.microarray.messaging.message.ChipsterMessage;
 import fi.csc.microarray.messaging.message.ParameterMessage;
 import fi.csc.microarray.messaging.message.ResultMessage;
 import fi.csc.microarray.util.IOUtils.CopyProgressListener;
@@ -330,14 +330,14 @@ public class TaskExecutor {
 		}
 
 		private void extractPayloads(ResultMessage resultMessage) throws JMSException, MicroarrayException, IOException {
-			for (String name : resultMessage.payloadNames()) {
+			for (String name : resultMessage.payloadNames()) {							
 				logger.debug("output " + name);
 				URL payloadUrl = resultMessage.getPayload(name);
-				InputStream payload = fileBroker.getFile(payloadUrl); 
+				InputStream payload = fileBroker.getFile(payloadUrl);							
 				DataBean bean = manager.createDataBean(name, payload);
 				bean.setCacheUrl(payloadUrl);
 				bean.setContentChanged(false);
-				pendingTask.addOutput(name, bean);
+				pendingTask.addOutput(name, bean);				
 			}
 		}
 
