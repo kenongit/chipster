@@ -97,7 +97,8 @@ def update_bundle(name, n_version):
     if not n_version:
         n_version = max(get_compatible_bundle_versions(name))
     if n_version == o_version:
-        raise Exception("Bundle already this version!")
+        logging.info("Bundle already this version!")
+        return
 
     # remove_bundle(name)
     # install_bundle(name, n_version)
@@ -434,7 +435,10 @@ def explode_package(pkg_name, pkg_values):
         raise Exception("Unknown archive format!")
 
     # Create temporary directory
-    tmp_dir = tempfile.mkdtemp() + "/"
+    
+    tmp_path = tools_path + "tmp"
+    os.makedir(tmp_path)
+    tmp_dir = tempfile.mkdtemp(tmp_path) + "/"
     logging.debug("tempdir: %s" % tmp_dir)
 
     # Extract archive
@@ -670,7 +674,8 @@ if __name__ == '__main__':
     bundles_file = prog_path + "bundles.yaml"
     installed_file = prog_path + "installed.yaml"
     installation_path = "/opt/chipster/"
-    logging.basicConfig(level=logging.INFO)
+    tools_path = installation_path + "tools/"
+    logging.basicConfig(level=logging.WARNING)
 
     logging.debug("prog_path: %s" % prog_path)
     logging.debug("chipster_version: %s" % chipster_version)
@@ -680,11 +685,12 @@ if __name__ == '__main__':
     available_bundles = load_available_bundles(bundles_file)
     installed_bundles = load_installed_bundles(installed_file)
 
+    # print_available_bundles()
     # update_list, personal_list, deprecate_list = are_updates_available()
 
     # logging.debug("calculated checksum: %s"% calculate_checksum("/home/mkarlsso/Downloads/cheatsheet-a4-color.pdf"))
     # explode_bundle("hg19", "1.0")
     # implode_bundle("hg19", "1.0")
     # logging.debug(diff_bundle("hg19", "1.0", "1.1"))
-    # transform_bundle("hg19", "1.0", "1.1")
+    # transform_bundle("hg19", "1.0", "1.1")    
     parse_commandline()
