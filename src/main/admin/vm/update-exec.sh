@@ -7,7 +7,7 @@
 
 # Latest version, matching tar-packages must be available 
 ##
-LATEST_VERSION=2.6.1
+LATEST_VERSION=2.7.0
 
 # Exit immediately if some command fails
 set -e
@@ -943,7 +943,24 @@ if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
               
 fi
 
-# 2.6.2
+# 2.7.0
+compare_to_current_and_latest "2.7.0"
+if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then 
+
+  echo "** Installing sva R library for R-2.15_bioc-2.11"
+  curl -s http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/R/R-2.15.1_bioc-2.11/library/sva-vmbin.tar.gz | tar -xz -C ${TOOLS_PATH}/R-2.15.1_bioc-2.11/lib64/R/library/
+  
+  echo "** Installing mothur"
+  cd ${TMPDIR_PATH}/
+  wget -nv http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/mothur/Mothur-1.28.cen_64.noReadLine.zip
+  unzip -q Mothur-1.28.cen_64.noReadLine.zip
+  mv mothur ${TOOLS_PATH}/mothur-1.28
+  ln -s mothur-1.28 ${TOOLS_PATH}/mothur
+  curl -s http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/mothur/mothur-data.tar.gz | tar -xz -C ${TOOLS_PATH}/
+                                                                                                                                                                                                                                                                                                        
+fi
+
+# 2.7.1
 compare_to_current_and_latest "2.6.2"
 if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
  
@@ -953,7 +970,7 @@ if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
   #sudo apt-get install python3-yaml #How to do this?
 fi
 
-# 2.6.3
+# 2.7.2
 compare_to_current_and_latest "2.6.3"
 if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
   update_bundles
@@ -1010,7 +1027,7 @@ fi
 # Remove temp dir
 rm -rf ${TMPDIR_PATH}/
 
-#2.6.2 and after
+#2.7.2 and after
 show_available_bundles
 
 # Check backup dir

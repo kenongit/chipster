@@ -413,6 +413,7 @@ then
   ## R-2.15.1_bioc-2.11	
   curl -s http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/R/R-2.15.1_bioc-2.11/R-2.15.1_bioc-2.11-vmbin_v2.tar.gz | tar -xz -C ${TOOLS_PATH}/  
 	curl -s http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/R/R-2.15.1_bioc-2.11/library/png-vmbin.tar.gz | tar -xz -C ${TOOLS_PATH}/R-2.15.1_bioc-2.11/lib64/R/library/
+	curl -s http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/R/R-2.15.1_bioc-2.11/library/sva-vmbin.tar.gz | tar -xz -C ${TOOLS_PATH}/R-2.15.1_bioc-2.11/lib64/R/library/
 	
 
   ## External apps:
@@ -760,6 +761,14 @@ then
   ln -s fseq-1.84 ${TOOLS_PATH}/fseq
   curl -s http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/misc/read_extend_bed.pm -o ${TOOLS_PATH}/fseq/bin/read_extend_bed.pm
   chmod 775 ${TOOLS_PATH}/fseq/bin/read_extend_bed.pm
+
+  # mothur GPLv3
+  cd ${TMPDIR_PATH}/
+  wget -nv http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/mothur/Mothur-1.28.cen_64.noReadLine.zip
+  unzip -q Mothur-1.28.cen_64.noReadLine.zip
+  mv mothur ${TOOLS_PATH}/mothur-1.28
+  ln -s mothur-1.28 ${TOOLS_PATH}/mothur
+  curl -s http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/mothur/mothur-data.tar.gz | tar -xz -C ${TOOLS_PATH}/
 
   ## Create checksums
   cd ${TOOLS_PATH}/
