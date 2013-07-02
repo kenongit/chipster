@@ -16,12 +16,12 @@ import zipfile
 import logging
 
 
-def load_available_bundles(filename):
+def load_all_bundles(filename):
     """
     :type filename: str
     """
     bundles_yaml = yaml.load(open(filename, "r"))
-    logging.debug("load_available_bundles: ")
+    logging.debug("load_all_bundles: ")
     # pprint(bundles_yaml)
     return bundles_yaml
 
@@ -124,8 +124,8 @@ def get_available_bundle(name):
     :type name: str
     """
     retval = None
-    if name in available_bundles:
-        retval = available_bundles[name]
+    if name in all_bundles:
+        retval = all_bundles[name]
     logging.debug("get_available_bundle: %s" % retval)
     return retval
 
@@ -211,9 +211,21 @@ def are_updates_available():
 
     return updated_bundles, personal_bundles, deprecated_bundles
 
+def get_all_bundles():
+    return sorted(all_bundles.keys())
+    
+def get_installed_bundles():
+    return sorted(installed_bundles.keys())               
+    
+def get_available_bundles():    
+    available = all_bundles.keys() - installed_bundles.keys()
+    return sorted(available)   
 
-# TODO: Complete this!
-def print_available_bundles():
+def print_bundles(bundle_list):
+    for bundle in bundle_list:
+        print(bundle)
+
+def print_bundles_verbose(bundle_list):
     """
     """
 
@@ -228,10 +240,15 @@ def print_available_bundles():
         else:
             return version
 
-    for bundle, value in available_bundles.items():
-        if value:
-            versions = sorted([(bundle, version["version"]) for version in value])
-            print(versions)
+    for bundle in bundle_list:
+        print("%40s" % bundle, end="\t")
+        version_list_of_dicts = all_bundles[bundle]                        
+        version_list_of_strs = sorted([version["version"] for version in version_list_of_dicts])
+        
+        for version in version_list_of_strs:                                
+            print(complement_version_id([bundle, version]), end="\t")
+            
+        print("") # new line
 
 
 def create_tree(dst):
@@ -250,7 +267,7 @@ def explode_bundle(name, version):
     Explode bundle contents into installation path
     """
     # Blindly assume list can only contain one matching version
-    a_version = [b_version for b_version in available_bundles[name] if b_version["version"] == version][0]
+    a_version = [b_version for b_version in all_bundles[name] if b_version["version"] == version][0]
     logging.debug("version: %s" % a_version)
 
     # Loop through packages
@@ -265,7 +282,7 @@ def implode_bundle(name, version):
     Implode bundle contents from installation path
     """
     # Blindly assume list can only contain one matching version
-    a_version = [b_version for b_version in available_bundles[name] if b_version["version"] == version][0]
+    a_version = [b_version for b_version in all_bundles[name] if b_version["version"] == version][0]
     logging.debug("version: %s" % a_version)
 
     # Loop through packages
@@ -545,21 +562,39 @@ def parse_commandline():
     # upgrade [bundle name/version]
     # uninstall [bundle name]
 
-    # list [installed, available, upgradeable]
+    # list [all, installed, available]
 
     # -v,--verbose
 
-    parser = argparse.ArgumentParser(description="Admin tool for Chipster bundles", epilog="Blah blah blah")
+    keyword_help="accepted keywords:\n" + \
+    "  all \t\t\tall bundles\n" + \
+    "  installed \t\tinstalled bundles\n" + \
+    "  available \t\tbundles that aren't installed at the momment\n"
+
+    parser = argparse.ArgumentParser(description="Admin tool for Chipster bundles", 
+                                     epilog=keyword_help, formatter_class=argparse.RawTextHelpFormatter)
     # group = parser.add_mutually_exclusive_group()
-    # group.add_argument("-v", "--verbose", action="store_true")
-    # group.add_argument("-q", "--quiet", action="store_true")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    # group.add_argument("-q", "--quiet", action="store_true")    
+    
     parser.add_argument("action", type=str, help="Action to perform",
                         choices=["install", "uninstall", "update", "list"])  # ,metavar="action"
-    parser.add_argument("bundle", type=str, help="Bundle <name>/<version> or <keyword>")  # ,metavar="bundle name"
+    parser.add_argument("bundle", type=str, help="Bundle <name>/<version> or <keyword>{all, installed, available}")  # ,metavar="bundle name"
     # parser.add_argument("updates", type=str, help="Check for updates", choices=["check-update"])
-    args = parser.parse_args()
+                
+    args = parser.parse_args(["list", "available", "-v"])                    
 
     name, version = get_name_version(args.bundle)
+    
+    bundle_list = None
+    
+    if name == "all":
+        bundle_list = get_all_bundles()
+    elif name == "installed":
+        bundle_list = get_installed_bundles()
+    elif name == "available":
+        bundle_list = get_available_bundles()
+    
     logging.debug("%s/%s" % (name, version))
     if args.action == "install":
         logging.info("Install something!")
@@ -572,10 +607,10 @@ def parse_commandline():
         update_bundle(name, version)
     elif args.action == "list":
         logging.info("List something!")
-        print_available_bundles()
-
-#    if name == "all":
-#        print_available_bundles()
+        if args.verbose:
+            print_bundles_verbose(bundle_list)
+        else:
+            print_bundles(bundle_list)
 
 
 def diff_bundle(name, version_a, version_b):
@@ -687,10 +722,13 @@ if __name__ == '__main__':
     logging.debug("bundles_file: %s" % bundles_file)
     logging.debug("installed_file: %s" % installed_file)
 
-    available_bundles = load_available_bundles(bundles_file)
+    all_bundles = load_all_bundles(bundles_file)
     installed_bundles = load_installed_bundles(installed_file)
 
-    # print_available_bundles()
+    #print_all_bundles()
+    #print_installed_bundles()
+    #print_available_bundles()
+    
     # update_list, personal_list, deprecate_list = are_updates_available()
 
     # logging.debug("calculated checksum: %s"% calculate_checksum("/home/mkarlsso/Downloads/cheatsheet-a4-color.pdf"))
