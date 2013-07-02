@@ -398,12 +398,12 @@ def explode_package(pkg_name, pkg_values):
     :type pkg_values: dict
     """
 
-    def copy_file(src, dst):
+    def move_file(src, dst):
         """
         :type src: str
         :type dst: str
         """
-        logging.debug("copy_file({})".format(src, dst))
+        logging.debug("move_file({})".format(src, dst))
 
         # Copy file into place
         create_tree(dst)
@@ -411,34 +411,39 @@ def explode_package(pkg_name, pkg_values):
         #     logging.debug("Using link() to copy file!")
         #     os.link(src, dst)
         # else:
-        logging.debug("Using copy2() to copy file!")
-        shutil.copy2(src, dst)
-        # shutil.move(src, dst)
-        logging.info("Copied: %s -> %s" % (src, dst))
+        # logging.debug("Using copy2() to copy file!")
+        # shutil.copy2(src, dst)
+        # logging.info("Copied: %s -> %s" % (src, dst))
+        
+        shutil.move(src, dst)
 
     logging.debug("explode_package({})".format(pkg_name, pkg_values))
 
-    # Download archive
-    (f, hm) = urllib.request.urlretrieve(pkg_name)
-    logging.debug(f)
-    logging.debug(hm)
-
     # Recognise archive type
-    if tarfile.is_tarfile(f):
+    if str(pkg_name).endswith(".tar.gz"):
         logging.info("File is tar (.gz/.bz2)!")
-        pf = tarfile.open(f)
-    elif zipfile.is_zipfile(f):
-        logging.info("File is zip!")
-        pf = zipfile.ZipFile(f)
-    else:
-        logging.exception("File is unknown!")
-        raise Exception("Unknown archive format!")
+        # Stream archive
+        f = urllib.request.urlopen(pkg_name)
+        pf = tarfile.open(fileobj=f, mode="r|*")
 
-    # Create temporary directory
+    else:
+        # Download archive
+        (f, hm) = urllib.request.urlretrieve(pkg_name)
+        logging.debug(f)
+        logging.debug(hm)
+        
+        if zipfile.is_zipfile(f):
+            logging.info("File is zip!")
+            pf = zipfile.ZipFile(f)
+        else:
+            logging.exception("File is unknown!")
+            raise Exception("Unknown archive format!")
+
+    # Create temporary directory on the same disk to enable quick move operation
     
-    tmp_path = tools_path + "tmp"
-    os.makedir(tmp_path)
-    tmp_dir = tempfile.mkdtemp(tmp_path) + "/"
+    tmp_path = tools_path + "tmp/"
+    os.makedirs(tmp_path)
+    tmp_dir = tempfile.mkdtemp(dir=tmp_path) + "/"
     logging.debug("tempdir: %s" % tmp_dir)
 
     # Extract archive
@@ -448,7 +453,7 @@ def explode_package(pkg_name, pkg_values):
 
     # Loop through files
     for file in pkg_values["files"]:
-        copy_file(tmp_dir + file["source"], refine_path(file["destination"]))
+        move_file(tmp_dir + file["source"], refine_path(file["destination"]))
 
     # Loop through symlinks
     if "symlinks" in pkg_values:
@@ -456,7 +461,7 @@ def explode_package(pkg_name, pkg_values):
             create_symlink(symlink["source"], refine_path(symlink["destination"]))
 
     # Destructively delete temporary directory w/ contents
-    shutil.rmtree(tmp_dir)
+    shutil.rmtree(tmp_path)
     logging.info("Temp dir deleted!")
     logging.info("Package %s has exploded!" % pkg_name)
 
