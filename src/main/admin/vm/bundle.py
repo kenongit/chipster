@@ -71,10 +71,13 @@ def install_bundle(name, version):
     save_installed_bundles(installed_file)
 
 
-def remove_bundle(name):
-    """
+def remove_bundle(name, version):
+    """        
+    Version parameter is not really used for anything, it only makes the interface uniform with other methods.
+    
     :rtype: None
     :type name: str
+    :type version: str
     """
     if not is_bundle_installed(name):
         logging.warn("Bundle " + name + " not installed!")
@@ -160,7 +163,10 @@ def get_bundle_version(name, version):
     """
     retval = [elem for elem in get_bundle(name) if elem["version"] == version]
     logging.debug("get_bundle_version: %s" % retval)
-    return retval[0]
+    if retval:
+        return retval[0]
+    else:
+        return None
 
 
 def is_bundle_deprecated(name, version):
@@ -540,8 +546,17 @@ def validate_bundle(name, version):
             logging.debug("File is OK!")
         else:
             logging.warning("File " + file + " is corrupted!")
-
-
+            
+            
+def check_existence(name, version):
+    if not get_bundle(name):
+        logging.error("There is no bundle with name: " + name)
+        return False;
+    if version and not get_bundle_version(name, version):
+        logging.error("There is no version " + version + " for bundle " + name)
+        return False;
+    return True
+        
 def parse_commandline():
     # TODO: Complete this!
     """
@@ -568,25 +583,31 @@ def parse_commandline():
 
     # -v,--verbose
 
-    keyword_help="accepted keywords:\n" + \
+    end_help="accepted keywords:\n" + \
     "  all \t\t\tall bundles\n" + \
     "  installed \t\tinstalled bundles\n" + \
-    "  available \t\tbundles not installed\n"
+    "  available \t\tbundles not installed\n" + \
+    "\n" + \
+    "examples:\n" + \
+    "  list all -v\n" + \
+    "  update installed\n" + \
+    "  install available\n"
 
     parser = argparse.ArgumentParser(description="Admin tool for Chipster bundles", 
-                                     epilog=keyword_help, formatter_class=argparse.RawTextHelpFormatter)
+                                     epilog=end_help, formatter_class=argparse.RawTextHelpFormatter)
     # group = parser.add_mutually_exclusive_group()
-    parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("--debug", action="store_true")
-    parser.add_argument("-q", "--quiet", action="store_true")    
+    parser.add_argument("-d", "--debug", action="store_true", help="Print detailed output for debugging")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Report only if the requested end result wasn't achieved")    
+    parser.add_argument("-v", "--verbose", action="store_true", help="Extend the bundle list with version information")
     
     parser.add_argument("action", type=str, help="Action to perform",
                         choices=["install", "uninstall", "update", "list"])  # ,metavar="action"
     parser.add_argument("bundle", type=str, help="Bundle <name>[/<version>] or <keyword>{all, installed, available}")  # ,metavar="bundle name"
     # parser.add_argument("updates", type=str, help="Check for updates", choices=["check-update"])
                 
-    # args = parser.parse_args(["list", "all", "-v"]) # for testing
-    args = parser.parse_args()
+    #args = parser.parse_args(["list", "all", "-v"]) # for testing
+    args = parser.parse_args(["-h"]) # for testing
+    #args = parser.parse_args()
     
     if args.debug:    
         logging.getLogger().setLevel(logging.DEBUG)
@@ -607,6 +628,8 @@ def parse_commandline():
         bundle_list = [(b_name, None) for b_name in get_available_bundles()]
     else:
         bundle_list = [(name, version)]
+        if not check_existence(name, version):
+            return
     
     logging.debug("%s/%s" % (name, version))
     if args.action == "install":
@@ -716,10 +739,10 @@ def handle_file_error(e):
         logging.warning(e)
     # File/Tree exists
     elif e.errno == 17:
-        logging.warning(e)
+        logging.debug(e)
     # Tree not empty
     elif e.errno == 39:
-        logging.warning(e)
+        logging.debug(e)
     else:
         raise
 

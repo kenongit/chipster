@@ -112,49 +112,6 @@ function info_before_260()
   echo ""
 }
 
-function update_bundles()
-{
-  echo "** Updating genome bundles"
-  wget -q -O bundles.yaml http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/bundle/bundles.yaml  
-  cat installed.yaml | cut -d ":" -f 1 > installed-bundles.txt
-
-  while read b; do
-    python3 bundle.py update "$b"
-  done < installed-bundles.txt
-  rm installed-bundles.txt
-}
-
-function show_available_bundles()
-{
-  cat installed.yaml | cut -d ":" -f 1 > installed-bundles.txt
-  python3 bundle.py list useless-parameter | sed s/"'"/""/g | sed s/"\[("/""/g | cut -d "," -f 1 > all-bundles.txt
-
-  #find out rows that are in all-bundles.txt but not in installed-bundles.txt. Don't care about the exit code.
-  set +e
-  grep -vxF -f installed-bundles.txt all-bundles.txt > available-bundles.txt
-  set -e
-
-  if [ -s available-bundles.txt ]
-  then
-    echo ""
-    echo "Following genome bundles are available, but not installed:"
-    echo "----------------------------------------------------------"
-    cat available-bundles.txt
-    echo "----------------------------------------------------------"
-    echo "Install bundle by running command 'python3 bundle.py install <BUNDLE_NAME>'"
-    echo ""
-
-  else
-    echo ""
-    echo "All genome bundles are installed."
-    echo ""
-  fi
-
-  rm installed-bundles.txt all-bundles.txt available-bundles.txt
-}
-
-
-
 # Make sure user has sudo rights
 echo ""
 echo "Some parts of the update may need root privileges. These parts are run using sudo."
@@ -960,22 +917,14 @@ if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
                                                                                                                                                                                                                                                                                                         
 fi
 
-# 2.7.1
-compare_to_current_and_latest "2.6.2"
+# 2.8.0
+compare_to_current_and_latest "2.8.0"
 if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
  
   echo "** Installing genome bundle tool"
   wget -q -O installed.yaml http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/bundle/installed.yaml
-  wget -q -O bundle.py http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/bundle/2.6/bundle.py
   #sudo apt-get install python3-yaml #How to do this?
 fi
-
-# 2.7.2
-compare_to_current_and_latest "2.6.3"
-if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
-  update_bundles
-fi
-
   
 
 #####################################
@@ -1006,6 +955,10 @@ if [ $CURRENT_COMPARED -lt 0 ] ; then
   # Copy away tool scripts in case there were important local changes
     cp -r comp/modules ${BACKUPDIR_PATH}/
 
+  # Unpack bundle tool
+    echo "** Updating Chipster genome bundle tool"
+    tar -C .. --overwrite -xzf chipster-$LATEST_VERSION.tar.gz chipster/bundle.py
+
   # Unpack tool scripts
     echo "** Updating Chipster tool scripts: comp/modules"
     tar -C .. --overwrite -xzf chipster-$LATEST_VERSION.tar.gz chipster/comp/modules
@@ -1027,8 +980,45 @@ fi
 # Remove temp dir
 rm -rf ${TMPDIR_PATH}/
 
-#2.7.2 and after
-show_available_bundles
+# Bundle
+function update_bundles()
+{
+  echo "** Updating genome bundles"
+  wget -q http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/bundle/bundles.yaml -O bundles.yaml
+  python3 bundle.py update installed -q
+}
+
+function show_available_bundles()
+{
+  python3 bundle.py list available > available-bundles.txt
+
+  if [ -s available-bundles.txt ]
+  then
+    echo ""
+    echo "Following genome bundles are available, but not installed:"
+    echo "----------------------------------------------------------"
+    cat available-bundles.txt
+    echo "----------------------------------------------------------"
+    echo "Install available bundle(s) by running command 'python3 bundle.py install <BUNDLE>' or "
+    echo "'python3 bundle.py install available'"
+    echo "For more detailed help, see 'python3 bundle.py -h'."
+    echo ""
+
+  else
+    echo ""
+    echo "All genome bundles are already installed."
+    echo ""
+  fi
+
+  rm available-bundles.txt
+}
+
+# Run this only on the versions after bundle tool installation
+compare_to_current_and_latest "2.8.0"
+if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then 
+  update_bundles
+  show_available_bundles
+fi
 
 # Check backup dir
 SIZE=`du -hs ${BACKUPDIR_PATH} | cut -f1`
