@@ -2,7 +2,7 @@
 # INPUT alignment.bam: "BAM alignment file" TYPE GENERIC
 # OUTPUT exon-counts.tsv
 # PARAMETER paired: "Does the alignment file contain paired-end data" TYPE [yes, no] DEFAULT no (Does the alignment data contain paired end or single end reads?)
-# PARAMETER organism: "Organism" TYPE [hg19: "Human (hg19.72)", mm10: "Mouse (mm10.68)", rn4: "Rat (rn4.68)"] DEFAULT hg19 (Which organism is your data from.)
+# PARAMETER organism: "Annotation GTF" TYPE [Homo_sapiens.GRCh37.72.DEXSeq.gtf: "Human (hg19.72\)", Mus_musculus.NCBIM37.62.DEXSeq.gtf: "Mouse (mm9.62\)", Mus_musculus.GRCm38.68.DEXSeq.gtf: "Mouse (mm10.68\)", Rattus_norvegicus.RGSC3.4.68.DEXSeq.gtf: "Rat (rn4.68\)"] DEFAULT Homo_sapiens.GRCh37.72.DEXSeq.gtf (You can use own GTF file or one of those provided on the server.)
 # PARAMETER chr: "Chromosome names in my BAM file look like" TYPE [chr1: "chr1", 1: "1"] DEFAULT chr1 (Chromosome names must match in the BAM file and in the reference annotation. Check your BAM and choose accordingly.)
 
 # 18.9.2012 TH and EK 
@@ -15,38 +15,15 @@ samtools.sort <- ifelse(paired == "yes", paste(samtools.binary, "sort -on alignm
 
 samtools.view <- paste(samtools.binary, "view alignment.bam")
 
-# gtf
-annotation.file <- ""
-if (organism == "hg19") {
-	if (chr == 1){
-		annotation.file <- "Homo_sapiens.GRCh37.72.DEXSeq.gtf"
-	}else {
-		annotation.file <- "Homo_sapiens.GRCh37.72.chr.DEXSeq.gtf"
-	}		
+# GTF: If chr version is required, we create a local copy with chr ont he fly, otherwise we use the existing file 
+annotation.file <- file.path(chipster.tools.path, "genomes", "gtf", organism)
+if (chr == 1){
+	gtf <- annotation.file
+}else{ 
+	source(file.path(chipster.common.path, "AddChr.R"))
+	addChrToGtf(annotation.file, organism)
+	gtf <- organism
 }
-if (organism == "mm9") {
-	if (chr == 1){
-		annotation.file <- "Mus_musculus.NCBIM37.62.DEXSeq.gtf"
-	}else {
-		annotation.file <- "Mus_musculus.NCBIM37.62.chr.DEXSeq.gtf"
-	}
-}
-if (organism == "mm10") {
-	if (chr == 1){
-		annotation.file <- "Mus_musculus.GRCm38.68.DEXSeq.gtf"
-	}else{
-		annotation.file <- "Mus_musculus.GRCm38.68.chr.DEXSeq.gtf"
-	}
-}
-if (organism == "rn4") {
-	if (chr == 1){
-		annotation.file <- "Rattus_norvegicus.RGSC3.4.68.DEXSeq.gtf"
-	}else{
-		annotation.file <- "Rattus_norvegicus.RGSC3.4.68.chr.DEXSeq.gtf"
-	}
-}
-gtf <- file.path(chipster.tools.path, "genomes", "gtf", annotation.file)
-
 
 # exoncount
 dexseq.binary <- file.path(chipster.tools.path, "dexseq-exoncounts", "dexseq_count.py")

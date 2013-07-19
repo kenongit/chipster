@@ -6,7 +6,7 @@
 # OUTPUT OPTIONAL dexseq-exons.pdf: dexseq-exons.pdf
 # OUTPUT OPTIONAL dexseq-MAplot.pdf: dexseq-MAplot.pdf
 # OUTPUT OPTIONAL dexseq-dispersion-plot.pdf: dexseq-dispersion-plot.pdf
-# PARAMETER organism: "Annotation GTF" TYPE [hg19: "Human (hg19\)", mm9: "Mouse (mm9\)", mm10: "Mouse (mm10\)", rn4: "Rat (rn4\)"] DEFAULT hg19 (You can use own GTF file or one of those provided on the server.)
+# PARAMETER organism: "Annotation GTF" TYPE [Homo_sapiens.GRCh37.72.DEXSeq.gtf: "Human (hg19.72\)", Mus_musculus.NCBIM37.62.DEXSeq.gtf: "Mouse (mm9.62\)", Mus_musculus.GRCm38.68.DEXSeq.gtf: "Mouse (mm10.68\)", Rattus_norvegicus.RGSC3.4.68.DEXSeq.gtf: "Rat (rn4.68\)"] DEFAULT Homo_sapiens.GRCh37.72.DEXSeq.gtf (You can use own GTF file or one of those provided on the server.)
 # PARAMETER chr: "Chromosome names in my BAM file look like" TYPE [chr1: "chr1", 1: "1"] DEFAULT chr1 (Chromosome names must match in the BAM file and in the reference annotation. Check your BAM and choose accordingly.)
 # PARAMETER pvalue: "Threshold for adjusted p-value" TYPE DECIMAL FROM 0 TO 1 DEFAULT 0.05 (Threshold for BH adjusted p-values. If a gene has at least one exon below this p-value, all its exons will be included in the result list.)
 # PARAMETER OPTIONAL dispersion: "Common dispersion" TYPE DECIMAL FROM 0 TO 100 DEFAULT 0.1 (If dispersions can not be estimated, this common dispersion value is used for all exons. In this case no graphical output is generated.)
@@ -39,37 +39,18 @@ if(any(as.vector(table(phenodata$group))<2)) {
 ####
 ####gtf<-"C:/Users/Jarno Tuimala/Desktop/DEXSeq/Homo_sapiens.GRCh37.68.chr.DEXSeq.gtf"
 ####
-annotation.file <- ""
-if (organism == "hg19") {
-	if (chr == 1){
-		annotation.file <- "Homo_sapiens.GRCh37.72.DEXSeq.gtf"
-	}else {
-		annotation.file <- "Homo_sapiens.GRCh37.72.chr.DEXSeq.gtf"
-	}		
-}
-if (organism == "mm9") {
-	if (chr == 1){
-		annotation.file <- "Mus_musculus.NCBIM37.62.DEXSeq.gtf"
-	}else {
-		annotation.file <- "Mus_musculus.NCBIM37.62.chr.DEXSeq.gtf"
-	}
-}
-if (organism == "mm10") {
-	if (chr == 1){
-		annotation.file <- "Mus_musculus.GRCm38.68.DEXSeq.gtf"
-	}else{
-		annotation.file <- "Mus_musculus.GRCm38.68.chr.DEXSeq.gtf"
-	}
-}
-if (organism == "rn4") {
-	if (chr == 1){
-		annotation.file <- "Rattus_norvegicus.RGSC3.4.68.DEXSeq.gtf"
-	}else{
-		annotation.file <- "Rattus_norvegicus.RGSC3.4.68.chr.DEXSeq.gtf"
-	}
+
+# GTF: If chr version is required, we create a local copy with chr ont he fly, otherwise we use the existing file 
+annotation.file <- file.path(chipster.tools.path, "genomes", "gtf", organism)
+if (chr == 1){
+	gtf <- annotation.file
+}else{ 
+	source(file.path(chipster.common.path, "AddChr.R"))
+	addChrToGtf(annotation.file, organism)
+	gtf <- organism
 }
 
-gtf <- file.path(chipster.tools.path, "genomes", "gtf", annotation.file)
+#gtf <- file.path(chipster.tools.path, "genomes", "gtf", annotation.file)
 
 
 # Reads the data

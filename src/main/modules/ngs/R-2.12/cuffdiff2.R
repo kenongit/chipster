@@ -29,7 +29,7 @@
 # OUTPUT OPTIONAL tss_groups.fpkm_tracking.tsv
 # OUTPUT OPTIONAL tss_groups.read_group_tracking.tsv
 # PARAMETER output.type: "Output type" TYPE [concise, complete] DEFAULT concise (Cuffdiff produces a large number of output files (over 20\). You can choose to see the complete output or just concise processed output.)
-# PARAMETER internalgtf: "Annotation GTF" TYPE [hg19: "Human (hg19\)", mm9: "Mouse (mm9\)", mm10: "Mouse (mm10\)", rn4: "Rat (rn4\)"] DEFAULT hg19 (You can use own GTF file or one of those provided on the server.)
+# PARAMETER organism: "Annotation GTF" TYPE [Homo_sapiens.GRCh37.72.gtf: "Human (hg19.72\)", Mus_musculus.NCBIM37.62.gtf: "Mouse (mm9.62\)", Mus_musculus.GRCm38.68.gtf: "Mouse (mm10.68\)", Rattus_norvegicus.RGSC3.4.68.gtf: "Rat (rn4.68\)"] DEFAULT Homo_sapiens.GRCh37.72.gtf (You can use own GTF file or one of those provided on the server.)
 # PARAMETER chr: "Chromosome names in my BAM file look like" TYPE [chr1: "chr1", 1: "1"] DEFAULT chr1 (Chromosome names must match in the BAM file and in the reference annotation. Check your BAM and choose accordingly.)
 # PARAMETER OPTIONAL fdr: "Allowed false discovery rate" TYPE DECIMAL FROM 0 TO 1 DEFAULT 0.05 (FDR-adjusted p-values (q-values\) are calculated. The concise output files include only those genes or transcripts which have a q-value lower than the given FDR. The value of the Significant-column is adjusted accordingly (yes/no\) in all output files.) 
 # PARAMETER OPTIONAL mmread: "Enable multi-mapped read correction" TYPE [yes, no] DEFAULT no (By default, Cufflinks will uniformly divide each multi-mapped read to all of the positions it maps to. If multi-mapped read correction is enabled, Cufflinks will re-estimate the transcript abundances dividing each multi-mapped read probabilistically based on the initial abundance estimation, the inferred fragment length and fragment bias, if bias correction is enabled.)
@@ -73,40 +73,21 @@ if (bias == "yes") {
 	}
 	cuffdiff.options <- paste(cuffdiff.options, "-b", genomefile)
 }
+
+# Annotation
+annotation.file <- c(file.path(chipster.tools.path, "genomes", "gtf", organism))
 if (file.exists("annotation.gtf")){
-	cuffdiff.options <- paste(cuffdiff.options, "annotation.gtf")
+	gtf <- "annotation.gtf"
 }else{
-	if (internalgtf == "hg19") {
-		if (chr == 1){
-			annotation.file <- "Homo_sapiens.GRCh37.72.gtf"
-		}else {
-			annotation.file <- "Homo_sapiens.GRCh37.72.chr.gtf"
-		}		
+	if (chr == 1){
+		gtf <- annotation.file
+	}else{ 
+		source(file.path(chipster.common.path, "AddChr.R"))
+		addChrToGtf(annotation.file, organism)
+		gtf <- organism
 	}
-	if (internalgtf == "mm9") {
-		if (chr == 1){
-			annotation.file <- "Mus_musculus.NCBIM37.62.gtf"
-		}else {
-			annotation.file <- "Mus_musculus.NCBIM37.62.chr.gtf"
-		}
-	}
-	if (internalgtf == "mm10") {
-		if (chr == 1){
-			annotation.file <- "Mus_musculus.GRCm38.68.gtf"
-		}else{
-			annotation.file <- "Mus_musculus.GRCm38.68.chr.gtf"
-		}
-	}
-	if (internalgtf == "rn4") {
-		if (chr == 1){
-			annotation.file <- "Rattus_norvegicus.RGSC3.4.68.gtf"
-		}else{
-			annotation.file <- "Rattus_norvegicus.RGSC3.4.68.chr.gtf"
-		}
-	}
-	annotation.file <- c(file.path(chipster.tools.path, "genomes", "gtf", annotation.file))
-	cuffdiff.options <- paste(cuffdiff.options, annotation.file)
 }
+cuffdiff.options <- paste(cuffdiff.options, gtf)
 
 # command
 command <- paste(cuffdiff.binary, "-q", "-o tmp", cuffdiff.options, "treatment1.bam", "control1.bam")
@@ -320,3 +301,4 @@ if (output.type == "complete"){
 		system("mv tmp/tss_groups.read_group_tracking tss_groups.read_group_tracking.tsv")
 	}
 }
+system("ls > test.txt")
