@@ -78,9 +78,9 @@ if (file.exists("annotation.gtf")){
 }else{
 	if (internalgtf == "hg19") {
 		if (chr == 1){
-			annotation.file <- "Homo_sapiens.GRCh37.68.gtf"
+			annotation.file <- "Homo_sapiens.GRCh37.72.gtf"
 		}else {
-			annotation.file <- "Homo_sapiens.GRCh37.68.chr.gtf"
+			annotation.file <- "Homo_sapiens.GRCh37.72.chr.gtf"
 		}		
 	}
 	if (internalgtf == "mm9") {

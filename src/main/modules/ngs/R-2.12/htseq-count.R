@@ -2,8 +2,8 @@
 # INPUT alignment.bam: "BAM alignment file" TYPE GENERIC
 # OUTPUT htseq-counts.tsv 
 # OUTPUT OPTIONAL htseq-count-info.txt
-# PARAMETER organism: "Organism" TYPE [Homo_sapiens.GRCh37.68: "Human (hg19.68)", Mus_musculus.GRCm38.68: "Mouse (mm10.68)", Mus_musculus.NCBIM37.62: "Mouse (mm9.62)", Rattus_norvegicus.RGSC3.4.68: "Rat (rn4.68)"] DEFAULT Homo_sapiens.GRCh37.68 (Which organism is your data from.)
-# PARAMETER chr: "Chromosome names in my BAM file look like" TYPE [yes: "chr1", no: "1"] DEFAULT yes (Chromosome names must match in the BAM file and in the reference annotation. Check your BAM and choose accordingly.)
+# PARAMETER organism: "Organism" TYPE [Homo_sapiens.GRCh37.72: "Human (hg19.72)", Mus_musculus.GRCm38.68: "Mouse (mm10.68)", Mus_musculus.NCBIM37.62: "Mouse (mm9.62)", Rattus_norvegicus.RGSC3.4.68: "Rat (rn4.68)"] DEFAULT Homo_sapiens.GRCh37.68 (Which organism is your data from.)
+# PARAMETER chr: "Chromosome names in my BAM file look like" TYPE [chr1: "chr1", 1: "1"] DEFAULT chr1 (Chromosome names must match in the BAM file and in the reference annotation. Check your BAM and choose accordingly.)
 # PARAMETER paired: "Does the alignment file contain paired-end data" TYPE [yes, no] DEFAULT no (Does the alignment data contain paired end or single end reads?)
 # PARAMETER stranded: "Was the data produced with a strand-specific RNA-seq protocol" TYPE [yes, no, reverse] DEFAULT no (If you select no, a read is considered overlapping with a feature regardless of whether it is mapped to the same or the opposite strand as the feature. If you select yes, the read has to be mapped to the same strand as the feature. You have to say no, if your was not made with a strand-specific RNA-seq protocol, because otherwise half your reads will be lost.)
 # PARAMETER OPTIONAL mode: "Mode to handle reads overlapping more than one feature" TYPE [union, intersection-strict, intersection-nonempty] DEFAULT union (How to deal with reads that overlap more than one gene or exon?)
@@ -37,10 +37,10 @@ if(print.coord == "no") {
 	htseq.binary <- file.path(chipster.tools.path, "htseq", "htseq-count_chr")
 }
 
-if(chr == "yes"){
+if(chr == "chr1"){
 	organism <- paste(organism, ".chr.gtf", sep="")
 }
-if(chr == "no"){
+if(chr == "1"){
 	organism <- paste(organism, ".gtf", sep="")
 }
 gtf <- file.path(chipster.tools.path, "genomes", "gtf", organism)
