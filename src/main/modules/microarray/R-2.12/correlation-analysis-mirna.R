@@ -1,4 +1,4 @@
-# TOOL correlation-analysis-mirna.R: "Correlate miRNA with target expression" (Performs a statistical test to detect miRNA targets whose expression is significantly positively or negatively correlated to the expression of the miRNA.)
+# TOOL correlation-analysis-mirna.R: "Correlate miRNA with target expression" (Performs a statistical test to detect miRNA targets whose expression is significantly correlated to the expression of the miRNA.)
 # INPUT normalized_mirna.tsv: normalized_mirna.tsv TYPE GENE_EXPRS 
 # INPUT normalized_gene.tsv: normalized_gene.tsv TYPE GENE_EXPRS 
 # INPUT phenodata_mirna.tsv: phenodata_mirna.tsv TYPE GENERIC 
