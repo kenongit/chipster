@@ -989,6 +989,7 @@ if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
  
   echo "** Installing genome bundle tool dependencies"
   sudo apt-get install python3-yaml
+  touch installed.yaml
 fi
   
 

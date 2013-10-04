@@ -225,10 +225,13 @@ def get_all_bundles():
     return sorted(all_bundles.keys())
     
 def get_installed_bundles():
-    return sorted(installed_bundles.keys())               
+    if installed_bundles:
+        return sorted(installed_bundles.keys())
+    else:
+        return set()               
     
 def get_available_bundles():    
-    available = all_bundles.keys() - installed_bundles.keys()
+    available = all_bundles.keys() - get_installed_bundles()
     return sorted(available)   
 
 def print_bundles(bundle, version):
@@ -606,8 +609,8 @@ def parse_commandline():
     # parser.add_argument("updates", type=str, help="Check for updates", choices=["check-update"])
                 
     #args = parser.parse_args(["list", "all", "-v"]) # for testing
-    args = parser.parse_args(["-h"]) # for testing
-    #args = parser.parse_args()
+    #args = parser.parse_args(["-h"]) # for testing
+    args = parser.parse_args()
     
     if args.debug:    
         logging.getLogger().setLevel(logging.DEBUG)
@@ -753,7 +756,7 @@ def handle_file_error(e):
 
 if __name__ == '__main__':
     prog_path = os.path.abspath(os.path.dirname(sys.argv[0])) + "/"
-    chipster_version = 2.6
+    chipster_version = 2.8
     bundles_file = prog_path + "bundles.yaml"
     installed_file = prog_path + "installed.yaml"
     installation_path = "/opt/chipster/"
