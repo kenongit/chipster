@@ -40,7 +40,10 @@ def load_installed_bundles(filename):
             print(e)
         else:
             raise
-    return bundles_yaml
+    if bundles_yaml:    
+        return bundles_yaml
+    else:
+        return {}
 
 
 def save_installed_bundles(filename):
@@ -119,7 +122,7 @@ def is_bundle_installed(name):
     :rtype : str or bool
     :type name: str
     """
-    if name in installed_bundles:
+    if name in get_installed_bundles():
         return installed_bundles[name]
     else:
         return False
@@ -225,13 +228,10 @@ def get_all_bundles():
     return sorted(all_bundles.keys())
     
 def get_installed_bundles():
-    if installed_bundles:
-        return sorted(installed_bundles.keys())
-    else:
-        return set()               
+    return sorted(installed_bundles.keys())                
     
 def get_available_bundles():    
-    available = all_bundles.keys() - get_installed_bundles()
+    available = all_bundles.keys() - installed_bundles.keys()
     return sorted(available)   
 
 def print_bundles(bundle, version):
