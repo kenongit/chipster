@@ -732,7 +732,10 @@ then
   cd ${CHIP_PATH}/
   apt-get install python3-yaml #sudo
   wget http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/bundle/bundles.yaml -O bundles.yaml
-  python3 bundle.py install all
+  #python3 bundle.py install all
+  python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie
+  python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie2
+  python3 bundle.py install Drosophila_melanogaster.BDGP5.bwa
   
   # DEXSeq
 	cd ${TMPDIR_PATH}/
