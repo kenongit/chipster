@@ -112,44 +112,6 @@ function info_before_260()
   echo ""
 }
 
-# Bundle
-
-function update_bundle_list()
-{
-  wget -q http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/bundle/bundles.yaml -O bundles.yaml
-}
-
-function update_bundles()
-{
-  echo "** Updating genome bundles"
-  update_bundle_list
-  python3 bundle.py update installed -q
-}
-
-function show_available_bundles()
-{
-  python3 bundle.py list available > available-bundles.txt
-
-  if [ -s available-bundles.txt ]
-  then
-    echo ""
-    echo "Following genome bundles are available, but not installed:"
-    echo "----------------------------------------------------------"
-    cat available-bundles.txt
-    echo "----------------------------------------------------------"
-    echo "Install available bundle(s) by running command 'python3 bundle.py install <BUNDLE>' or "
-    echo "'python3 bundle.py install available'"
-    echo "For more detailed help, see 'python3 bundle.py -h'."
-    echo ""
-
-  else
-    echo ""
-    echo "All genome bundles are already installed."
-    echo ""
-  fi
-
-  rm available-bundles.txt
-}
 
 # Make sure user has sudo rights
 echo ""
@@ -1027,12 +989,6 @@ if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
  
   echo "** Installing genome bundle tool dependencies"
   sudo apt-get install python3-yaml
-  update_bundle_list
-
-  echo "** Installing Drosophila melanogaster indexes"
-  python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie
-  python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie2
-  python3 bundle.py install Drosophila_melanogaster.BDGP5.bwa
 fi
   
 
@@ -1089,10 +1045,49 @@ fi
 # Remove temp dir
 rm -rf ${TMPDIR_PATH}/
 
-# Run this only on the versions after bundle tool installation
+# Bundle
+function update_bundles()
+{
+  echo "** Updating genome bundles"
+  wget -q http://www.nic.funet.fi/pub/sci/molbio/chipster/dist/tools_extras/bundle/bundles.yaml -O bundles.yaml
+  python3 bundle.py update installed -q
+}
+
+function show_available_bundles()
+{
+  python3 bundle.py list available > available-bundles.txt
+
+  if [ -s available-bundles.txt ]
+  then
+    echo ""
+    echo "Following genome bundles are available, but not installed:"
+    echo "----------------------------------------------------------"
+    cat available-bundles.txt
+    echo "----------------------------------------------------------"
+    echo "Install available bundle(s) by running command 'python3 bundle.py install <BUNDLE>' or "
+    echo "'python3 bundle.py install available'"
+    echo "For more detailed help, see 'python3 bundle.py -h'."
+    echo ""
+
+  else
+    echo ""
+    echo "All genome bundles are already installed."
+    echo ""
+  fi
+
+  rm available-bundles.txt
+}
+
+# Version specific bundle tool commands
 compare_to_current_and_latest "2.8.2"
 if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then 
   update_bundles
+
+  echo "** Installing Drosophila melanogaster indexes"
+  python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie
+  python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie2
+  python3 bundle.py install Drosophila_melanogaster.BDGP5.bwa
+
   #show_available_bundles
 fi
 
