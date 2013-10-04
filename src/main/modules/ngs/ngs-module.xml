@@ -117,6 +117,9 @@
 			<resource>fi.csc.chipster.tools.ngs.SortGtf</resource>
 		</tool>
 		<tool runtime="java">
+			<resource>fi.csc.chipster.tools.ngs.SortTsv</resource>
+		</tool>
+		<tool runtime="java">
 			<resource>fi.csc.chipster.tools.ngs.SortVcf</resource>
 		</tool>		
 		<tool runtime="R-2.12">
@@ -305,12 +308,15 @@
 		</tool>
 		<tool runtime="R-2.12">
 			<resource>ngs-annotate-miRNA-targets.R</resource>
-		</tool>
-		<tool runtime="R-2.12">
-			<resource>ngs-pathways-mirna-hyperg-go.R</resource>
+		</tool> 
+		<tool runtime="R-2.12" module="common">
+			<resource>pathways-mirna-hyperg-go.R</resource>
 		</tool>
 		<tool runtime="R-2.12">
 			<resource>ngs-pathways-mirna-hyperg-kegg.R</resource>
+		</tool>
+		<tool runtime="R-2.15_bioc-2.11">
+			<resource>miRNA_RNA-seq_integration.R</resource>
 		</tool>
 		<tool runtime="R-2.12">
 			<resource>ngs-correlation-analysis-mirna.R</resource>
@@ -427,6 +433,9 @@
 		</tool>		
 		<tool runtime="R-2.15">
 			<resource>mothur-classifyseqs.R</resource>
+		</tool>
+	    <tool runtime="R-2.15_bioc-2.11">
+			<resource>mothur-analyses.R</resource>
 		</tool>
 	</category>
 </module>

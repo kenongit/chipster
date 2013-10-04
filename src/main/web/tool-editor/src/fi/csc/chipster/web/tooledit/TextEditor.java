@@ -1,101 +1,155 @@
 package fi.csc.chipster.web.tooledit;
 
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
 
-import com.vaadin.ui.Button;
-import com.vaadin.ui.Button.ClickEvent;
-import com.vaadin.ui.Button.ClickListener;
 import com.vaadin.ui.TextArea;
-import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-import fi.csc.microarray.description.SADLDescription;
-import fi.csc.microarray.description.SADLDescription.Input;
-import fi.csc.microarray.description.SADLDescription.Output;
-import fi.csc.microarray.description.SADLDescription.Parameter;
-import fi.csc.microarray.description.SADLParser;
-import fi.csc.microarray.description.SADLParser.ParseException;
-import fi.csc.microarray.module.chipster.ChipsterSADLParser;
+import fi.csc.microarray.analyser.SADLTool;
+import fi.csc.microarray.analyser.SADLTool.ParsedScript;
+import fi.csc.microarray.util.IOUtils;
+import fi.csc.microarray.util.Strings;
 
+/**
+ * Text editor
+ * @author Gintare Pacauskaite
+ *
+ */
 public class TextEditor extends VerticalLayout{
 	private static final long serialVersionUID = -7074541336842177583L;
 	
-	private TextArea txtArea;
-	private Button btUpdate;
-	private ToolEditorUI root;
+	private static final String HEADER_PREFIX= "#";
 	
-	public static final String NEW_LINE = "\n";
-	
+	private static class SeparatedContent {
+		public String header = "";
+		public String code = "";
+	}
 
+	private TextArea txtArea;
+
+	
 	public TextEditor(ToolEditorUI root) {
-		this.root = root;
 		init();
 	}
 	
 	private void init() {
-		
-		btUpdate = new Button("Update");
-		btUpdate.addClickListener(new ClickListener() {
-			private static final long serialVersionUID = 1487893808578560989L;
-
-			@Override
-			public void buttonClick(ClickEvent event) {
-				String text = takeHeader(getText());
-				
-				ChipsterSADLParser parser = new ChipsterSADLParser();
-				try {
-					SADLDescription description = parser.parse(text);
-//					System.out.println(description);
-					root.getToolEditor().removeAllComponents();
-					root.getToolEditor().addTool(description);
-					List<Input> inputs = description.inputs();
-					for(int i = 0 ; i < inputs.size(); i++) {
-						root.getToolEditor().addInput(inputs.get(i));
-					}
-					List<Output> outputs = description.outputs();
-					for(int i = 0 ; i < outputs.size(); i++) {
-						root.getToolEditor().addOutput(outputs.get(i));
-					}
-					List<Parameter> parameters = description.parameters();
-					for(int i = 0 ; i < parameters.size(); i++) {
-						root.getToolEditor().addParameter(parameters.get(i));
-					}
-					
-				} catch (ParseException e) {
-					e.printStackTrace();
-				}
-				
-			}
-		});
-		this.addComponent(btUpdate);
-		
 		txtArea = new TextArea();
-		txtArea.setRows(20);
-		txtArea.setWidth("80%");
+		txtArea.setSizeFull();
+		// for some reasons size full does not do anything to height
+		txtArea.setRows(50);
 		
 		this.addComponent(txtArea);
 	}
 	
-	public String getText() {
-		return txtArea.getValue();
+	
+	/**
+	 * 
+	 * @return plain header without comment prefix
+	 * @throws IOException 
+	 */
+	public String getHeader() throws IOException {
+		SADLTool tool = new SADLTool("#");
+
+		// this will make sure that there's empty line after header and non empty line in the beginning of the code
+		SeparatedContent content = parseContent();
+		
+		// parse header to sadl
+		ParsedScript parsedScript = tool.parseScript(new ByteArrayInputStream(content.header.getBytes()));
+		
+		// update text area (now with exactly one empty line between header and code
+		txtArea.setValue(content.header + content.code);
+		
+		return parsedScript.SADL;
+	}
+
+	
+	/**
+	 * 
+	 * @param newHeader without prefixes
+	 * @throws IOException
+	 */
+	public void setHeader(String newHeader) throws IOException {
+		
+		// save old content
+		// parsed code will start with non empty line
+		SeparatedContent oldContent = parseContent();
+		
+		// prefix new header, add empty line in the end
+		SADLTool sadlTool = new SADLTool("#");
+		ParsedScript temp = new ParsedScript();
+		temp.SADL = newHeader;
+		String prefixedHeader = sadlTool.toScriptString(temp) + "\n";
+		
+		// set new content
+		txtArea.setValue(prefixedHeader + oldContent.code);
+		
 	}
 	
-	public String takeHeader(String input) {
-		StringBuilder output = new StringBuilder();
-		input = input.replace("#", "");
-		String[] array = input.split(NEW_LINE);
-		int i = 0;
-		array[i] = array[i].trim();
-//		System.out.println(array.length + " " + array[0]);
-		while (i < array.length && (array[i].startsWith("TOOL") || array[i].startsWith("INPUT") 
-				|| array[i].startsWith("OUTPUT") || array[i].startsWith("PARAMETER"))) {
-			output.append(array[i] + NEW_LINE);
-			i++;
-			if(i < array.length)
-				array[i] = array[i].trim();
+	
+	public void clearAllText() {
+		txtArea.setValue("");
+	}
+
+	/**
+	 * Resulting header will end in one empty line and resulting code will start with non empty line.
+	 * @return
+	 * @throws IOException
+	 */
+	private SeparatedContent parseContent() throws IOException {
+		BufferedReader reader = new BufferedReader(new StringReader(txtArea.getValue()));
+		StringBuilder header = new StringBuilder();
+		StringBuilder code = new StringBuilder();
+		boolean parsingHeader = true;
+		boolean firstSignificantLineRead = false;
+		try {
+			for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+
+				// eat empty lines and empty prefixed lines from beginning
+				if (!firstSignificantLineRead && (
+						(line.trim().isEmpty()) ||
+						(line.startsWith(HEADER_PREFIX) && line.substring(HEADER_PREFIX.length()).trim().isEmpty())
+						)) {
+					continue;
+				}
+
+				// first significant line
+				if (!firstSignificantLineRead) {
+					// first line is prefixed -> header
+					if (line.startsWith(HEADER_PREFIX)) {
+						parsingHeader = true;
+						header.append(line + "\n");
+					} 
+
+					// first line not prefixed -> not header
+					else {
+						parsingHeader = false;
+						code.append(line + "\n");
+					}
+
+					firstSignificantLineRead = true;
+					continue;
+				}
+
+				// rest of the lines, header ends with empty or non-prefixed line or prefixed white space line
+				if (parsingHeader && line.startsWith(HEADER_PREFIX) && !line.substring(HEADER_PREFIX.length()).trim().isEmpty()) {
+					header.append(line + "\n");
+				} else {
+					code.append(line + "\n");
+					parsingHeader = false;
+				}
+			}
+		} finally {
+			IOUtils.closeIfPossible(reader);
 		}
-//		System.out.println("output:" + output);
-		return output.toString();
+		
+		// add empty line to the end of header, remove empty lines from the beginning of code
+		SeparatedContent content = new SeparatedContent();
+		content.header = header.toString() + "\n";
+		content.code = Strings.removeEmptyLinesFromBeginning(code.toString());
+		return content;
 	}
 
 }
