@@ -3,6 +3,8 @@
 # convert necessary files. Then check that all files are ok and fill in the details of each genome 
 # in the yaml file under tools/genomebrowser/annotation. After that, this script can be used to create the bundle
 # packages. Internally the packages are created with a tool 'to_bundle.py'.
+#
+# TODO: This version packages genome browser files and fasta to same tar file, but propably those should be separated.
 
 cd /opt/chipster/tools
 

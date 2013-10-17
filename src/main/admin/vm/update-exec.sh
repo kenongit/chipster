@@ -988,8 +988,59 @@ compare_to_current_and_latest "2.8.2"
 if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
  
   echo "** Installing genome bundle tool dependencies"
-  sudo apt-get install python3-yaml
+  sudo apt-get -y install python3-yaml
   touch installed.yaml
+
+  echo "** Remove old genome browser annotations"
+  mv -b ${TOOLS_PATH}/genomebrowser/annotations ${BACKUPDIR_PATH}/
+  mkdir -p ${TOOLS_PATH}/genomebrowser/annotations
+
+  echo "** Remove old genomes and indexes"
+
+  # These old versions are removed from the analysis tools and kept only in the genome browser
+
+  mv -b ${TOOLS_PATH}/genomes/fasta/mm9.fa ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/genomes/fasta/rn4.fa ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bwa_indexes/mm9.* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bwa_indexes/rn4.* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie/indexes/mm9.* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie/indexes/rn4.* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie2/indexes/rn4.* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/genomes/gtf/Rattus_norvegicus* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/genomes/gtf/Mus_musculus.NCBIM37.62.chr.gtf ${BACKUPDIR_PATH}/
+
+  # Updated versions for these are installed later with bundle tool
+
+  mv -b ${TOOLS_PATH}/bwa_indexes/Canis_familiaris.CanFam3.1.71.dna.toplevel* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie/indexes/Canis_familiaris.CanFam3.1.71.dna.toplevel* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie2/indexes/Canis_familiaris.CanFam3.1.71.dna.toplevel* ${BACKUPDIR_PATH}/
+
+#  mv -b ${TOOLS_PATH}/bwa_indexes/Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel* ${BACKUPDIR_PATH}/
+#  mv -b ${TOOLS_PATH}/bowtie/indexes/Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel* ${BACKUPDIR_PATH}/
+#  mv -b ${TOOLS_PATH}/bowtie2/indexes/Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel* ${BACKUPDIR_PATH}/
+
+  mv -b ${TOOLS_PATH}/bwa_indexes/Gasterosteus_aculeatus.BROADS1.71.dna.toplevel* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie/indexes/Gasterosteus_aculeatus.BROADS1.71.dna.toplevel* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie2/indexes/Gasterosteus_aculeatus.BROADS1.71.dna.toplevel* ${BACKUPDIR_PATH}/
+
+  mv -b ${TOOLS_PATH}/bwa_indexes/Rattus_norvegicus.Rnor_5.0.70.dna.toplevel* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie/indexes/Rattus_norvegicus.Rnor_5.0.70.dna.toplevel* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie2/indexes/Rattus_norvegicus.Rnor_5.0.70.dna.toplevel* ${BACKUPDIR_PATH}/
+
+  # remove no-chr fasta and gtf files, except sus scrofa which is still used in bwa
+  mkdir -p ${TOOLS_PATH}/genomes/fasta/new-nochr/
+  mv -b ${TOOLS_PATH}/genomes/fasta/nochr/Sus_scrofa.Sscrofa10.2.69.dna.toplevel.fa ${TOOLS_PATH}/genomes/fasta/new-nochr/
+  mv -b ${TOOLS_PATH}/genomes/fasta/nochr ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/genomes/fasta/new-nochr ${TOOLS_PATH}/genomes/fasta/nochr  
+
+#  mv -b ${TOOLS_PATH}/genomes/fasta/Halorubrum_lacusprofundi_ATCC_49239.fa ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/genomes/fasta/N916Ysi.fa ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/genomes/fasta/R1-RT.fa ${BACKUPDIR_PATH}/
+
+  mv -b ${TOOLS_PATH}/genomes/gtf/Canis_familiaris.CanFam3.1.71.gtf ${BACKUPDIR_PATH}/
+#  mv -b ${TOOLS_PATH}/genomes/gtf/Escherichia_coli_n1.GCA_000303635.1.18.gtf ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/genomes/gtf/Gasterosteus_aculeatus.BROADS1.71.gtf ${BACKUPDIR_PATH}/
+
 fi
   
 
@@ -1079,17 +1130,57 @@ function show_available_bundles()
   rm available-bundles.txt
 }
 
+function install_bundle()
+{
+  echo "** Installing $1 genome"
+  python3 bundle.py install $1.bowtie
+  python3 bundle.py install $1.bowtie2
+  python3 bundle.py install $1.bwa
+  python3 bundle.py install $1
+}
+
 # Version specific bundle tool commands
 compare_to_current_and_latest "2.8.2"
 if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then 
   update_bundles
 
-  echo "** Installing Drosophila melanogaster indexes"
-  python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie
-  python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie2
-  python3 bundle.py install Drosophila_melanogaster.BDGP5.bwa
+  # Install all files for these genomes
+  install_bundle "Bos_taurus.UMD3.1"
+  install_bundle "Canis_familiaris.CanFam3.1"
+  install_bundle "Drosophila_melanogaster.BDGP5"
+#no bundle for Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel
+#no bundle for Halobrum_lacusprofundi
+  install_bundle "Gallus_gallus.Galgal4"
+  install_bundle "Gasterosteus_aculeatus.BROADS1"
+  install_bundle "Rattus_norvegicus.Rnor_5.0"
+  install_bundle "Vitis_vinifera.IGGP_12x"
 
+  # Old or custom genomes only for genome browser, don't install indexes
+  echo "** Migrating installed genomes"  
+  python3 bundle.py install Rattus_norvegicus.RGSC3.4.69
+  python3 bundle.py install Mus_musculus.NCBIM37.67  
+  python3 bundle.py install Canis_familiaris.BROADD2.67  
+  python3 bundle.py install Homo_sapiens.NCBI36.54
+  python3 bundle.py install Human_mitoch.NC_012920
+  python3 bundle.py install Yersinia_similis.N916Ysi
+  python3 bundle.py install phiR1-RT.HE956709.1
+
+  # We can't update indexes or fasta, because those use chromosome names starting with 'chr'.
+  # Nevertheless, we can install the new annotations for the genome browser. This shouldn't 
+  # override any existing files, because the new ensembl version number makes the names of 
+  # the new files unique.
+  echo "** Updating installed genomes"  
+  python3 bundle.py install Arabidopsis_lyrata.v.1.0
+  python3 bundle.py install Arabidopsis_thaliana.TAIR10
+  python3 bundle.py install Homo_sapiens.GRCh37
+  python3 bundle.py install Mus_musculus.GRCm38
+  python3 bundle.py install Ovis_aries.Oar_v3.1
+  python3 bundle.py install Sus_scrofa.Sscrofa10.2
+
+  #Do not show yet, because tools don't handle missing genomes
   #show_available_bundles
+
+  echo ""
 fi
 
 # Check backup dir
