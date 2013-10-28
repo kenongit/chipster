@@ -736,6 +736,8 @@ then
   python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie
   python3 bundle.py install Drosophila_melanogaster.BDGP5.bowtie2
   python3 bundle.py install Drosophila_melanogaster.BDGP5.bwa
+  #gb
+  #fasta and gtf
   
   # DEXSeq
 	cd ${TMPDIR_PATH}/
