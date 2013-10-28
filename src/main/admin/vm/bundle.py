@@ -501,7 +501,7 @@ def refine_path(path):
     """
     new_path = path
     if not os.path.isabs(path):
-        new_path = installation_path + path
+        new_path = tools_path + path
     return new_path
 
 

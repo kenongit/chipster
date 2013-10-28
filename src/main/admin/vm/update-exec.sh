@@ -1015,9 +1015,9 @@ if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
   mv -b ${TOOLS_PATH}/bowtie/indexes/Canis_familiaris.CanFam3.1.71.dna.toplevel* ${BACKUPDIR_PATH}/
   mv -b ${TOOLS_PATH}/bowtie2/indexes/Canis_familiaris.CanFam3.1.71.dna.toplevel* ${BACKUPDIR_PATH}/
 
-#  mv -b ${TOOLS_PATH}/bwa_indexes/Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel* ${BACKUPDIR_PATH}/
-#  mv -b ${TOOLS_PATH}/bowtie/indexes/Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel* ${BACKUPDIR_PATH}/
-#  mv -b ${TOOLS_PATH}/bowtie2/indexes/Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bwa_indexes/Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie/indexes/Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel* ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/bowtie2/indexes/Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel* ${BACKUPDIR_PATH}/
 
   mv -b ${TOOLS_PATH}/bwa_indexes/Gasterosteus_aculeatus.BROADS1.71.dna.toplevel* ${BACKUPDIR_PATH}/
   mv -b ${TOOLS_PATH}/bowtie/indexes/Gasterosteus_aculeatus.BROADS1.71.dna.toplevel* ${BACKUPDIR_PATH}/
@@ -1033,12 +1033,12 @@ if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
   mv -b ${TOOLS_PATH}/genomes/fasta/nochr ${BACKUPDIR_PATH}/
   mv -b ${TOOLS_PATH}/genomes/fasta/new-nochr ${TOOLS_PATH}/genomes/fasta/nochr  
 
-#  mv -b ${TOOLS_PATH}/genomes/fasta/Halorubrum_lacusprofundi_ATCC_49239.fa ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/genomes/fasta/Halorubrum_lacusprofundi_ATCC_49239.fa ${BACKUPDIR_PATH}/
   mv -b ${TOOLS_PATH}/genomes/fasta/N916Ysi.fa ${BACKUPDIR_PATH}/
   mv -b ${TOOLS_PATH}/genomes/fasta/R1-RT.fa ${BACKUPDIR_PATH}/
 
   mv -b ${TOOLS_PATH}/genomes/gtf/Canis_familiaris.CanFam3.1.71.gtf ${BACKUPDIR_PATH}/
-#  mv -b ${TOOLS_PATH}/genomes/gtf/Escherichia_coli_n1.GCA_000303635.1.18.gtf ${BACKUPDIR_PATH}/
+  mv -b ${TOOLS_PATH}/genomes/gtf/Escherichia_coli_n1.GCA_000303635.1.18.gtf ${BACKUPDIR_PATH}/
   mv -b ${TOOLS_PATH}/genomes/gtf/Gasterosteus_aculeatus.BROADS1.71.gtf ${BACKUPDIR_PATH}/
 
 fi
@@ -1146,21 +1146,23 @@ if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
   update_bundles
 
   # Install all files for these genomes
+  install_bundle "Arabidopsis_lyrata.v.1.0"
+  install_bundle "Arabidopsis_thaliana.TAIR10"
   install_bundle "Bos_taurus.UMD3.1"
   install_bundle "Canis_familiaris.CanFam3.1"
   install_bundle "Drosophila_melanogaster.BDGP5"
-#no bundle for Escherichia_coli_n1.GCA_000303635.1.18.dna.toplevel
-#no bundle for Halobrum_lacusprofundi
   install_bundle "Gallus_gallus.Galgal4"
   install_bundle "Gasterosteus_aculeatus.BROADS1"
   install_bundle "Rattus_norvegicus.Rnor_5.0"
   install_bundle "Vitis_vinifera.IGGP_12x"
 
-  # Old or custom genomes only for genome browser, don't install indexes
+  # Old or custom genomes
   echo "** Migrating installed genomes"  
   python3 bundle.py install Rattus_norvegicus.RGSC3.4.69
   python3 bundle.py install Mus_musculus.NCBIM37.67  
   python3 bundle.py install Canis_familiaris.BROADD2.67  
+  python3 bundle.py install Escherichia_coli_n1.GCA_000303635.1.18
+  python3 bundle.py install Halorubrum_lacusprofundi_ATCC_49239 
   python3 bundle.py install Homo_sapiens.NCBI36.54
   python3 bundle.py install Human_mitoch.NC_012920
   python3 bundle.py install Yersinia_similis.N916Ysi
@@ -1171,8 +1173,6 @@ if [ $CURRENT_COMPARED -lt 0 ] && [ ! $LATEST_COMPARED -lt 0 ] ; then
   # override any existing files, because the new ensembl version number makes the names of 
   # the new files unique.
   echo "** Updating installed genomes"  
-  python3 bundle.py install Arabidopsis_lyrata.v.1.0
-  python3 bundle.py install Arabidopsis_thaliana.TAIR10
   python3 bundle.py install Homo_sapiens.GRCh37
   python3 bundle.py install Mus_musculus.GRCm38
   python3 bundle.py install Ovis_aries.Oar_v3.1
@@ -1186,6 +1186,7 @@ fi
 
 # Check backup dir
 SIZE=`du -hs ${BACKUPDIR_PATH} | cut -f1`
+echo ""
 echo "Total of $SIZE old data has been backed up to ${BACKUPDIR_PATH}"
 echo "It is recommended to inspect the directory and then to remove it"
    
